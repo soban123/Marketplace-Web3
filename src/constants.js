@@ -1,4 +1,4 @@
-export const contract_address = "0x1D0Be262086ecb01a2f011Cf89Cc909781b62ECf";
+export const contract_address = "0xabB13D417251f686886407B5b622A5eeb0C219B5";
 export const  contract_abi = [
 	{
 		"inputs": [],
@@ -348,9 +348,14 @@ export const  contract_abi = [
 				"type": "uint256"
 			},
 			{
-				"internalType": "uint256",
+				"internalType": "string",
 				"name": "type_of_nft",
-				"type": "uint256"
+				"type": "string"
+			},
+			{
+				"internalType": "address",
+				"name": "custodian",
+				"type": "address"
 			}
 		],
 		"name": "mintNft",
@@ -366,6 +371,19 @@ export const  contract_abi = [
 				"internalType": "string",
 				"name": "",
 				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
 			}
 		],
 		"stateMutability": "view",
@@ -509,6 +527,29 @@ export const  contract_abi = [
 			}
 		],
 		"name": "setNftPrice",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "nftId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "price",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "isForSale",
+				"type": "bool"
+			}
+		],
+		"name": "setNftsData",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"

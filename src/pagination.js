@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom";
 import ReactPaginate from "react-paginate";
 import nftVideos2 from "./nftVideos";
+import {contract_address} from "./constants"
 import {
   NavLink,
   useNavigate,
@@ -10,6 +11,15 @@ import {
   // useHistory
 } from "react-router-dom";
 import { browserHistory } from "react-router";
+
+
+
+const NFT_PRICE = {
+   Genesis : "770000000000000000" ,
+   Legendary : "260000000000000000" ,
+   Mythic : "510000000000000000" ,
+   Rare : "140000000000000000" ,
+}
 
 function Items({ currentItems, setSelectedMetadata }) {
   return (
@@ -106,20 +116,22 @@ export function SelectedNftComponent({
   accounts
 }) {
   const [Nft, setNft] = useState();
+  const [Owner, setOwner] = useState();
   useEffect(async () => {
     getNft();
   }, []);
   const getNft = async () => {
     let nft = await contract.methods.Nfts(SelectedMetadata.id).call();
+    let owner = await contract.methods.owner().call();
     setNft(nft);
+    setOwner(owner)
   };
 
   const buyNft =async () => {
-    console.log("selec" , SelectedMetadata)
     if(Nft?.owner == "0x0000000000000000000000000000000000000000"){
        await contract.methods
-      .mintNft(SelectedMetadata.id , 1 , 1)
-      .send({ from: accounts[0], value: 1 });
+      .mintNft(SelectedMetadata.id , NFT_PRICE[SelectedMetadata.properties.rarity] , SelectedMetadata.properties.rarity , contract_address )
+      .send({ from: accounts[0], value: NFT_PRICE[SelectedMetadata.properties.rarity] });
     }else{
        await contract.methods
       .buyNft(Nft.id)
@@ -127,13 +139,14 @@ export function SelectedNftComponent({
     }
     
   }
-  console.log("nft", Nft);
   const metaData = SelectedMetadata;
   const owner =
-    Nft?.owner == "0x0000000000000000000000000000000000000000"
-      ? "0xA1F3d449113578D3DAF2051F00090a9Cd6E056E6"
-      : Nft?.owner;
-  const price = Nft?.price == 0 ? 13 : Nft?.price;
+  Nft?.owner == "0x0000000000000000000000000000000000000000"
+  ? Owner
+  : Nft?.owner;
+  const price = Nft?.price == 0 ? NFT_PRICE[metaData?.properties?.rarity] : Nft?.price;
+  const isForSale =  Nft?.owner == "0x0000000000000000000000000000000000000000" ? true : Nft?.isForSale
+  console.log("nft", Nft , metaData , NFT_PRICE );
   return (
     <div
       className="
@@ -219,13 +232,14 @@ elementor-widget-image
             <h6 className="qodef-m-title">
               Design : {metaData?.properties?.design}
             </h6>
-            <input
+           { isForSale &&
+             <input
             onClick={buyNft}
             type="submit"
             className="es_subscription_form_submit es_submit_button es_textbox_button "
             id="es_subscription_form_submit_61a61952eae4f"
             value="Buy Now"
-          />
+          />}
           </div>
         </div>
       </div>

@@ -130,7 +130,7 @@ export function SelectedNftComponent({
   const buyNft =async () => {
     if(Nft?.owner == "0x0000000000000000000000000000000000000000"){
        await contract.methods
-      .mintNft(SelectedMetadata.id , NFT_PRICE[SelectedMetadata.properties.rarity] , SelectedMetadata.properties.rarity , contract_address )
+      .mintNft(SelectedMetadata.id , NFT_PRICE[SelectedMetadata.properties.rarity] , SelectedMetadata.properties.rarity  )
       .send({ from: accounts[0], value: NFT_PRICE[SelectedMetadata.properties.rarity] });
     }else{
        await contract.methods

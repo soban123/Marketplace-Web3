@@ -53,7 +53,6 @@ export default function MyNfts() {
     console.log("nfts" , nftsId)
     // const myNfts = metaData.filter(nft => nftsId.includes(nft.id))
     const myNfts = nftsId.map(nft => metaData[nft -1] )
-    console.log("myNfts" , myNfts)
     setMyNfts(myNfts)
 }
   //   const modifiedPackage = await Promise.all(
@@ -317,7 +316,7 @@ export function SelectedNftComponent({
   }) {
     const [Nft, setNft] = useState();
     const [NftPrice, setNftPrice] = useState(0)
-    const [NftIsForSale, setNftIsForSale] = useState(false)
+    const [NftIsForSale, setNftIsForSale] = useState("true")
 
     useEffect(async () => {
       getNft();
@@ -326,17 +325,21 @@ export function SelectedNftComponent({
       let nft = await contract.methods.Nfts(SelectedMetadata.id).call();
       setNft(nft);
       nft?.price == 0 ? setNftPrice(0) :setNftPrice(nft?.price);
-      setNftIsForSale(nft?.isForSale) 
+      console.log("nft" , nft)
+      nft?.isForSale ? setNftIsForSale("true")    :    setNftIsForSale("false") 
     };
   
     const updateNft =async () => {
+      console.log("NftIsForSale" , NftIsForSale == "true" , NftIsForSale)
    
-         await contract.methods
-        .setNftsData(Nft.id , NftPrice , NftIsForSale )
+     const result =     await contract.methods
+        .setNftsData(Nft.id , NftPrice , NftIsForSale == "true" )
         .send({ from: accounts[0]});
-
+        if(result){
+          alert("Your NFT has been updated.")
+        }
     }
-    console.log("nft", Nft);
+    console.log("nft", NftIsForSale);
     const metaData = SelectedMetadata;
     const owner =
       Nft?.owner == "0x0000000000000000000000000000000000000000"
@@ -419,7 +422,8 @@ export function SelectedNftComponent({
                 display: "flex",
                 flexDirection:"column",
                 justifyContent: "center",
-                alignItems:"flex-start"
+                alignItems:"flex-start",
+                minWidth:"520px"
               }}
             >
               <h4 className="qodef-m-title"> {metaData.name}</h4>{" "}
@@ -451,7 +455,7 @@ export function SelectedNftComponent({
               
               }}>
             <h6  className="qodef-m-title"> Is For Sale: </h6> 
-              <select value={NftIsForSale} onChange={e => setNftIsForSale(e.target.value)} id="cars" style={{width: '115px' , marginLeft:"20px"}} >
+              <select value={NftIsForSale} onChange={e => { console.log("e" , e.target.value) ; setNftIsForSale(e.target.value)}} id="cars" style={{width: '115px' , marginLeft:"20px"}} >
               <option value="true">True</option>
               <option value="false">False</option>
             </select> </div>

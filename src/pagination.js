@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom";
 import ReactPaginate from "react-paginate";
 import nftVideos2 from "./nftVideos";
-import {contract_address} from "./constants"
+import ClipLoader from "react-spinners/ClipLoader";
+import { contract_address } from "./constants";
 import {
   NavLink,
   useNavigate,
@@ -12,16 +13,29 @@ import {
 } from "react-router-dom";
 import { browserHistory } from "react-router";
 
-
-
 const NFT_PRICE = {
-   Genesis : "770000000000000000" ,
-   Legendary : "260000000000000000" ,
-   Mythic : "510000000000000000" ,
-   Rare : "140000000000000000" ,
-}
+  Genesis: "770000000000000000",
+  Legendary: "260000000000000000",
+  Mythic: "510000000000000000",
+  Rare: "140000000000000000",
+};
 
-function Items({ currentItems, setSelectedMetadata }) {
+function Items({ currentItems, setSelectedMetadata, filters, searchtext }) {
+
+  const applyFilters = (id) => {
+    if (filters.length && searchtext) {
+      window.location.href = `/?type=${filters.join(
+        ","
+      )}&search=${searchtext}&select=${id}`;
+    } else if (filters.length) {
+      window.location.href = `/?type=${filters.join(",")}&select=${id}`;
+    } else if (searchtext) {
+      window.location.href = `/?search=${searchtext}&select=${id}`;
+    } else {
+      window.location.href = `/?select=${id}`;
+    }
+  };
+
   return (
     <>
       <div
@@ -29,11 +43,11 @@ function Items({ currentItems, setSelectedMetadata }) {
           display: "flex",
           flexWrap: "wrap",
           justifyContent: "center",
-          width:"1300px"
+          width: "1300px",
         }}
         className="elementor-container elementor-column-gap-no"
       >
-        {currentItems?.length ?
+        {currentItems?.length ? (
           currentItems.map((currentItems) => {
             const videoSource =
               nftVideos2[
@@ -42,7 +56,6 @@ function Items({ currentItems, setSelectedMetadata }) {
                   .replace(/\s/g, "")
                   .replace(/-/g, "")
               ];
-            console.log("vide", videoSource);
             return (
               <div
                 className="
@@ -71,7 +84,9 @@ function Items({ currentItems, setSelectedMetadata }) {
                     data-id="73e3105"
                     data-element_type="widget"
                     data-widget_type="image.default"
-                    onClick={() => setSelectedMetadata(currentItems)}
+                    onClick={() => {
+                      applyFilters(currentItems.id)
+                    }}
                   >
                     <div
                       className="elementor-widget-container"
@@ -92,18 +107,24 @@ function Items({ currentItems, setSelectedMetadata }) {
                 </div>
               </div>
             );
-          }) :  <div
-          className="
+          })
+        ) : (
+          <div
+            className="
 elementor-column
 elementor-col-285
 elementor-top-column
 elementor-element
 elementor-element-35e0623
 "
-          data-id="35e0623"
-          data-element_type="column"
-          style={{ minWidth:"1300px" , textAlign:"center"}}
-        > <h3> No NFT found for this filters. </h3> </div>}
+            data-id="35e0623"
+            data-element_type="column"
+            style={{ minWidth: "1300px", textAlign: "center" }}
+          >
+            {" "}
+            <h3> No NFT found for this filters. </h3>{" "}
+          </div>
+        )}
       </div>
     </>
   );
@@ -113,10 +134,12 @@ export function SelectedNftComponent({
   SelectedMetadata,
   setSelectedMetadata,
   contract,
-  accounts
+  accounts,
 }) {
   const [Nft, setNft] = useState();
   const [Owner, setOwner] = useState();
+  const [Loading, setLoading] = useState(false);
+
   useEffect(async () => {
     getNft();
   }, []);
@@ -124,29 +147,65 @@ export function SelectedNftComponent({
     let nft = await contract.methods.Nfts(SelectedMetadata.id).call();
     let owner = await contract.methods.owner().call();
     setNft(nft);
-    setOwner(owner)
+    setOwner(owner);
+    console.log("loader" , Loading )
+    // if(Loading){
+      setLoading(false)
+    // }
   };
 
-  const buyNft =async () => {
-    if(Nft?.owner == "0x0000000000000000000000000000000000000000"){
-       await contract.methods
-      .mintNft(SelectedMetadata.id , NFT_PRICE[SelectedMetadata.properties.rarity] , SelectedMetadata.properties.rarity  )
-      .send({ from: accounts[0], value: NFT_PRICE[SelectedMetadata.properties.rarity] });
-    }else{
-       await contract.methods
-      .buyNft(Nft.id)
-      .send({ from: accounts[0], value:  Nft?.price });
+  const buyNft = async () => {
+    if (Nft?.owner == "0x0000000000000000000000000000000000000000") {
+      const result = await contract.methods
+        .mintNft(
+          SelectedMetadata.id,
+          NFT_PRICE[SelectedMetadata.properties.rarity],
+          SelectedMetadata.properties.rarity
+        )
+        .send({
+          from: accounts[0],
+          value: NFT_PRICE[SelectedMetadata.properties.rarity],
+        });
+
+        setLoading(true)
+
+      if (result) {
+        getNft();
+      }else{
+      setLoading(false)
+
+      }
+    } else {
+      const res = await contract.methods
+        .buyNft(Nft.id)
+        .send({ from: accounts[0], value: Nft?.price });
+        setLoading(true)
+
+      if (res) {
+        getNft();
+      }else{
+        setLoading(false)
+  
+        }
     }
-    
-  }
+  };
   const metaData = SelectedMetadata;
   const owner =
-  Nft?.owner == "0x0000000000000000000000000000000000000000"
-  ? Owner
-  : Nft?.owner;
-  const price = Nft?.price == 0 ? NFT_PRICE[metaData?.properties?.rarity] : Nft?.price;
-  const isForSale =  Nft?.owner == "0x0000000000000000000000000000000000000000" ? true : Nft?.isForSale
-  console.log("nft", Nft , metaData , NFT_PRICE );
+    Nft?.owner == "0x0000000000000000000000000000000000000000"
+      ? Owner
+      : Nft?.owner;
+  const price =
+    Nft?.price == 0 ? NFT_PRICE[metaData?.properties?.rarity] : Nft?.price;
+  const isForSale =
+    Nft?.owner == "0x0000000000000000000000000000000000000000"
+      ? true
+      : Nft?.isForSale;
+  console.log("nft", Nft, metaData, NFT_PRICE);
+
+  if (Loading) {
+    return <ClipLoader color={"white"} loading={Loading} size={150} />;
+  }
+
   return (
     <div
       className="
@@ -217,7 +276,7 @@ elementor-widget-image
               />
             </video>
           </div>
-          <div>
+          <div style={{ minWidth: "520px" }}>
             <h4 className="qodef-m-title"> {metaData.name}</h4>{" "}
             <h6 className="qodef-m-title"> # {`${metaData.id}`}</h6>{" "}
             <h6 className="qodef-m-title"> Owner : {owner} </h6>{" "}
@@ -232,14 +291,15 @@ elementor-widget-image
             <h6 className="qodef-m-title">
               Design : {metaData?.properties?.design}
             </h6>
-           { isForSale &&
-             <input
-            onClick={buyNft}
-            type="submit"
-            className="es_subscription_form_submit es_submit_button es_textbox_button "
-            id="es_subscription_form_submit_61a61952eae4f"
-            value="Buy Now"
-          />}
+            {isForSale && (
+              <input
+                onClick={buyNft}
+                type="submit"
+                className="es_subscription_form_submit es_submit_button es_textbox_button "
+                id="es_subscription_form_submit_61a61952eae4f"
+                value="Buy Now"
+              />
+            )}
           </div>
         </div>
       </div>
@@ -251,7 +311,7 @@ export default function PaginatedItems({
   itemsPerPage,
   items,
   contract,
-  accounts ,
+  accounts,
   ...props
 }) {
   const [SelectedMetadata, setSelectedMetadata] = useState();
@@ -272,22 +332,38 @@ export default function PaginatedItems({
   console.log("props", props);
   useEffect(() => {
     // Fetch items from another resources.
+    const selectedNft = searchParams.get("select");
+    if (selectedNft) {
+      console.log("selectedNft", selectedNft);
+      const searchedNft = items.filter((item) => item.id == selectedNft);
+      setSelectedMetadata(searchedNft[0]);
+    }
+
     const filterType = searchParams.get("type");
-   
+
     const filtertype = filterType?.split(",");
     filtertype && setfilters(filtertype);
 
     const filterSearch = searchParams.get("search");
-    const filteredSearchNfts = items.filter((item) =>
-    item.name.toLowerCase().includes(filterSearch?.toLowerCase()) ||  filterType?.includes(item.properties.rarity.toLowerCase())
+    const filteredSearchNfts = items.filter(
+      (item) =>
+        item.name.toLowerCase().includes(filterSearch?.toLowerCase()) ||
+        filterType?.includes(item.properties.rarity.toLowerCase())
     );
     filterSearch && setsearchtext(filterSearch);
 
-    const filterSearchAndType =  items.filter((item) =>
-    item.name.toLowerCase().includes(filterSearch?.toLowerCase()) && filterType?.includes(item.properties.rarity.toLowerCase())
+    const filterSearchAndType = items.filter(
+      (item) =>
+        item.name.toLowerCase().includes(filterSearch?.toLowerCase()) &&
+        filterType?.includes(item.properties.rarity.toLowerCase())
     );
 
-    const isFilteredNfts =   filterType && filterSearch ? filterSearchAndType  :   filterType || filterSearch  ? filteredSearchNfts : items;
+    const isFilteredNfts =
+      filterType && filterSearch
+        ? filterSearchAndType
+        : filterType || filterSearch
+        ? filteredSearchNfts
+        : items;
     console.log("tp", filterType);
     const page = Number(searchParams.get("page"));
     setcurrentPage(page);
@@ -305,18 +381,20 @@ export default function PaginatedItems({
     const newOffset = (event.selected * itemsPerPage) % items.length;
     const filterType = searchParams.get("type");
     const filterSearch = searchParams.get("search");
-    if(filterType && filterSearch ){
-      window.location.href = `/?page=${event.selected + 1}&type=${filterType}&search=${filterSearch}`
-    }else if(filterType){
-      window.location.href = `/?page=${event.selected + 1}&type=${filterType}`
-
-    }else if(filterSearch){
-      window.location.href = `/?page=${event.selected + 1}&search=${filterSearch}`
-
-    }else{
+    if (filterType && filterSearch) {
+      window.location.href = `/?page=${
+        event.selected + 1
+      }&type=${filterType}&search=${filterSearch}`;
+    } else if (filterType) {
+      window.location.href = `/?page=${event.selected + 1}&type=${filterType}`;
+    } else if (filterSearch) {
+      window.location.href = `/?page=${
+        event.selected + 1
+      }&search=${filterSearch}`;
+    } else {
       window.location.href = `/?page=${event.selected + 1}`;
     }
- 
+
     console.log(
       `User requested page number ${event.selected}, which is offset ${newOffset}`
     );
@@ -331,13 +409,15 @@ export default function PaginatedItems({
     }
   };
   const applyFilters = () => {
-    if(filters.length && searchtext ){
-      window.location.href = `/?page=1&type=${filters.join(",")}&search=${searchtext}`
-    }else if(filters.length ){
-      window.location.href = `/?page=1&type=${filters.join(",")}`
-    }else if(searchtext){
-      window.location.href = `/?page=1&search=${searchtext}`
-    }else{
+    if (filters.length && searchtext) {
+      window.location.href = `/?page=1&type=${filters.join(
+        ","
+      )}&search=${searchtext}`;
+    } else if (filters.length) {
+      window.location.href = `/?page=1&type=${filters.join(",")}`;
+    } else if (searchtext) {
+      window.location.href = `/?page=1&search=${searchtext}`;
+    } else {
       window.location.href = `/?page=1`;
     }
   };
@@ -355,6 +435,7 @@ export default function PaginatedItems({
           setSelectedMetadata={setSelectedMetadata}
           contract={contract}
           accounts={accounts}
+       
         />
       ) : (
         <div style={{ display: "flex" }}>
@@ -433,6 +514,8 @@ export default function PaginatedItems({
               currentItems={currentItems}
               setSelectedMetadata={setSelectedMetadata}
               contract={contract}
+              filters={filters}
+              searchtext={searchtext}
             />
             <ReactPaginate
               breakLabel="..."

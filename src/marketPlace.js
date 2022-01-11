@@ -134,16 +134,6 @@ export default function MarketPlace() {
     }
   };
 
-  const selectPackage = (name) => {
-    if (selectedTypes.includes(name)) {
-      const filteredPackages = selectedTypes.filter((pack) => pack !== name);
-      setSelectedTypes(filteredPackages);
-    } else {
-      setSelectedTypes([...selectedTypes, name]);
-    }
-  };
-
-
   if (Loading) {
     return <ClipLoader color={"white"} loading={Loading} size={150} />;
   }

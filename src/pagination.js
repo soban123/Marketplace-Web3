@@ -119,7 +119,7 @@ elementor-element-35e0623
 "
             data-id="35e0623"
             data-element_type="column"
-            style={{ minWidth: "1300px", textAlign: "center" }}
+            style={{ minWidth: "1300px", textAlign: "center" , marginLeft:"100px" }}
           >
             {" "}
             <h3> No NFT found for this filters. </h3>{" "}
@@ -280,7 +280,7 @@ elementor-widget-image
             <h4 className="qodef-m-title"> {metaData.name}</h4>{" "}
             <h6 className="qodef-m-title"> # {`${metaData.id}`}</h6>{" "}
             <h6 className="qodef-m-title"> Owner : {owner} </h6>{" "}
-            <h6 className="qodef-m-title">Price : {price} BNB</h6>
+            <h6 className="qodef-m-title">Price : {Number(price || 0)/1000000000000000000} BNB</h6>
             {/*  <h6 className="qodef-m-title">Color : {metaData?.properties?.color}</h6>
             <h6 className="qodef-m-title">Rarity : {metaData?.properties?.rarity}</h6>
             <h6 className="qodef-m-title">Type : {metaData?.properties?.type}</h6>

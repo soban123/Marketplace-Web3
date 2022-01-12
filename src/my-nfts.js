@@ -38,14 +38,13 @@ export default function MyNfts() {
     setaccounts(accounts);
     instance && accounts && getNftsByAddress(instance, accounts);
     //check is owner
-    // let owner = await instance.methods.owner().call();
-    // if(owner == accounts[0]){
-    //   setisOwner(true)
-    // }else{
-    //   setisOwner(false)
-    // }
+    let owner = await instance.methods.owner().call();
+    if(owner == accounts[0]){
+      setisOwner(true)
+    }else{
+      setisOwner(false)
+    }
   };
-
   const getNftsByAddress = async (contract, accounts) => {
     let nftsId =
       accounts.length &&
@@ -53,7 +52,10 @@ export default function MyNfts() {
     console.log("nfts" , nftsId)
     // const myNfts = metaData.filter(nft => nftsId.includes(nft.id))
     const myNfts = nftsId.map(nft => metaData[nft -1] )
-    setMyNfts(myNfts)
+   const uniqueArray = myNfts.filter(function(item, pos) {
+      return myNfts.indexOf(item) == pos;
+  })
+    setMyNfts(uniqueArray)
 }
   //   const modifiedPackage = await Promise.all(
   //     packages.map(async (packageObj) => {
@@ -105,16 +107,17 @@ export default function MyNfts() {
   };
 
   const sendNftsToInfluencer = async () => {
-    let owner = await contract.methods.ownerOfNft(giftTokenId).call();
-
+    let owner = await contract.methods.ownerOf(giftTokenId).call();
     if (owner !== accounts[0]) {
       alert(
         "You are not owner of this NFT or you already sent this to influencer."
       );
     } else {
-      await contract.methods
+     const result =  await contract.methods
         .sentToInfluencers(giftTokenId, influencerAddress)
         .send({ from: accounts[0] });
+
+       result && alert("Nft send to influencer.")
     }
   };
 
@@ -227,7 +230,7 @@ export default function MyNfts() {
                           </div>
                           <h6 className="qodef-m-title">
                             {" "}
-                            {MyNfts.name} {false ? `(${MyNfts.id})` : ""}
+                            {MyNfts.name} {isOwner ? `(${MyNfts.id})` : ""}
                           </h6>{" "}
                         </div>
                       </div>
@@ -266,6 +269,9 @@ export default function MyNfts() {
                   data-id="705fef1"
                   data-element_type="section"
                 >
+                <br />
+                <br />
+                <br />
                   <h1> Gift To Influencers </h1>
                   <div className="elementor-widget-container">
                     <OwnerSection
@@ -317,11 +323,19 @@ export function SelectedNftComponent({
     const [Nft, setNft] = useState();
     const [NftPrice, setNftPrice] = useState(0)
     const [NftIsForSale, setNftIsForSale] = useState("true")
+    const [isOwner, setisOwner] = useState(true)
 
     useEffect(async () => {
       getNft();
     }, []);
     const getNft = async () => {
+      let owner = await contract.methods.ownerOf(SelectedMetadata.id).call();
+      if (owner !== accounts[0]) {
+        setisOwner(false)
+        alert(
+          "You are no longer owner of this NFT."
+        );
+      }
       let nft = await contract.methods.Nfts(SelectedMetadata.id).call();
       setNft(nft);
       nft?.price == 0 ? setNftPrice(0) :setNftPrice(nft?.price);
@@ -339,7 +353,6 @@ export function SelectedNftComponent({
           alert("Your NFT has been updated.")
         }
     }
-    console.log("nft", NftIsForSale);
     const metaData = SelectedMetadata;
     const owner =
       Nft?.owner == "0x0000000000000000000000000000000000000000"
@@ -433,10 +446,11 @@ export function SelectedNftComponent({
               <h6 className="qodef-m-title">Price:   </h6>
               <input
               type="number"
-              value={NftPrice}
+              style={{fontWeight : "500" , width:"100px" }}
+              value={Number(NftPrice)/1000000000000000000}
               onChange={(e) => setNftPrice(e.target.value)}
             /> 
-            <h6>Wei </h6>
+            <h6> BNB </h6>
               </div>
              
               {/*  <h6 className="qodef-m-title">Color : {metaData?.properties?.color}</h6>
@@ -459,14 +473,15 @@ export function SelectedNftComponent({
               <option value="true">True</option>
               <option value="false">False</option>
             </select> </div>
-            <input
+           { isOwner ?  <input
               onClick={updateNft}
               style={{  margin :"40px 0px"}}
               type="submit"
               className="es_subscription_form_submit es_submit_button es_textbox_button "
               id="es_subscription_form_submit_61a61952eae4f"
               value="Update"
-            />
+            /> : "" }
+            <br />
             </div>
           </div>
         </div>

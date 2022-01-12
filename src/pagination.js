@@ -43,7 +43,7 @@ function Items({ currentItems, setSelectedMetadata, filters, searchtext }) {
           display: "flex",
           flexWrap: "wrap",
           justifyContent: "center",
-          width: "1300px",
+          width: "1260px",
         }}
         className="elementor-container elementor-column-gap-no"
       >
